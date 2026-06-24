@@ -1,1 +1,171 @@
+CREATE TABLE test_execution (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    execution_date DATE,
+    total_tests INT,
+    passed_tests INT,
+    failed_tests INT,
+    skipped_tests INT
+);
 
+
+CREATE TABLE defects (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    defect_key VARCHAR(50),
+    severity VARCHAR(20),
+    status VARCHAR(20),
+    created_date DATE,
+    closed_date DATE
+);
+
+
+CREATE TABLE releases (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    release_name VARCHAR(100),
+    release_date DATE,
+    production_incidents INT
+);
+
+@Entity
+@Table(name="test_execution")
+public class TestExecution {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private LocalDate executionDate;
+
+    private Integer totalTests;
+
+    private Integer passedTests;
+
+    private Integer failedTests;
+
+    private Integer skippedTests;
+}
+
+@Repository
+public interface TestExecutionRepository
+        extends JpaRepository<TestExecution, Long> {
+}
+
+@Service
+@RequiredArgsConstructor
+public class MetricsService {
+
+    private final TestExecutionRepository repository;
+
+    public double calculatePassRate() {
+
+        List<TestExecution> executions =
+                repository.findAll();
+
+        int total =
+                executions.stream()
+                .mapToInt(TestExecution::getTotalTests)
+                .sum();
+
+        int passed =
+                executions.stream()
+                .mapToInt(TestExecution::getPassedTests)
+                .sum();
+
+        return ((double) passed / total) * 100;
+    }
+}
+
+@RestController
+@RequestMapping("/metrics")
+@RequiredArgsConstructor
+public class MetricsController {
+
+    private final MetricsService service;
+
+    @GetMapping("/pass-rate")
+    public Double passRate() {
+        return service.calculatePassRate();
+    }
+}
+
+@RestController
+@RequestMapping("/metrics")
+@RequiredArgsConstructor
+public class MetricsController {
+
+    private final MetricsService service;
+
+    @GetMapping("/pass-rate")
+    public Double passRate() {
+        return service.calculatePassRate();
+    }
+}
+
+String url =
+"http://localhost:8080/job/api/json";
+
+Collect:
+
+Build status
+Failed tests
+Execution duration
+Regression results
+
+Metrics to Display
+
+Total Tests
+Passed Tests
+Failed Tests
+Skipped Tests
+Pass Rate %
+Automation Coverage %
+
+Defect Metrics
+
+Open Defects
+Closed Defects
+Critical Defects
+Defect Leakage
+Defect Density
+
+Release Metrics
+
+Release Readiness Score
+Production Defects
+Regression Stability
+
+Docker Compose
+version: '3'
+
+services:
+
+  mysql:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: qa_dashboard
+
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+
+    depends_on:
+      - mysql
+
+Automation Coverage
+coverage =
+automatedTests / totalTests * 100;
+
+Defect Leakage
+
+leakage =
+productionDefects /
+totalDefects * 100;
+
+Release Readiness
+score =
+(passRate * 0.4)
++
+((100 - leakage) * 0.4)
++
+(coverage * 0.2);
